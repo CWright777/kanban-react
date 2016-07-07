@@ -1,44 +1,33 @@
-import AltContainer from 'alt-container';
 import React from 'react';
-import uuid from 'node-uuid';
-import Note from './Note.jsx';
-import Notes from './Notes.jsx';
-import NoteActions from '../actions/NoteActions';
-import NoteStore from '../stores/NoteStore';
+import uuid from 'uuid';
+import {compose} from 'redux';
+import {DragDropContext} from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
+import connect from '../libs/connect';
+import Lanes from './Lanes';
+import LaneActions from '../actions/LaneActions';
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <div>
-        <button className="add-note" onClick={this.addNote}>+</button>
-        <AltContainer
-          stores={[NoteStore]}
-          inject={{
-            notes: () => NoteStore.getState().notes
-          }}
-        >
-          <Notes onEdit={this.editNote} onDelete={this.deleteNote} />
-        </AltContainer>
-      </div>
-    );
-  }
-
-  deleteNote = (id, e) => {
-    e.stopPropagation();
-
-    NoteActions.delete(id);
+const App = ({LaneActions, lanes}) => {
+  const addLane = () => {
+    LaneActions.create({
+      id: uuid.v4(),
+      name: 'New lane'
+    });
   };
 
-  addNote = () => {
-    NoteActions.create({task: 'New task'});
-  };
+  return (
+    <div>
+      <button className="add-lane" onClick={addLane}>+</button>
+      <Lanes lanes={lanes} />
+    </div>
+  );
+};
 
-  editNote(id, task) {
-    // Don't modify if trying set an empty value
-    if(!task.trim()) {
-      return;
-    }
-
-    NoteActions.update({id, task});
-  }
-}
+export default compose(
+  DragDropContext(HTML5Backend),
+  connect(({lanes}) => ({
+    lanes
+  }), {
+    LaneActions
+  })
+)(App)
